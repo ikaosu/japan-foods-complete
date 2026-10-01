@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+*.log
+.env
+.env.local
+# 地図の元データ（40MB）。tools/build-map.mjs の入力で、サイトには不要
+ne_*.geojson

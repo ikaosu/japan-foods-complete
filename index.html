@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🗾 47都道府県 料理制覇マップ</title>
+  <meta name="description" content="47都道府県の郷土料理を、ぜんぶ食べる企画。食べた県から日本地図が色づいていきます。" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#b06a4e" />
+  <link rel="icon" href="icons/favicon.png" sizes="48x48" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="47料理制覇" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <link rel="stylesheet" href="assets/styles.css?v=1" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>🗾 47都道府県 料理制覇マップ</h1>
+      <p class="tagline">47都道府県の郷土料理を、ぜんぶ食べる。<br class="tagline-br" />食べた県から地図が色づいていく。</p>
+
+      <div class="stats" id="stats">
+        <div class="stat">
+          <span class="stat-num" id="stat-prefs">–</span>
+          <span class="stat-label">食べた県</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="stat-percent">–</span>
+          <span class="stat-label">制覇率</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="stat-local">–</span>
+          <span class="stat-label">現地で食べた県</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="stat-dishes">–</span>
+          <span class="stat-label">食べた料理</span>
+        </div>
+      </div>
+
+      <div class="progress" title="47都道府県制覇の進捗">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="map-section">
+      <div class="map-layout">
+        <div class="map-col">
+          <div id="map" class="map" role="img" aria-label="日本地図。料理を食べた都道府県が色づいています。"></div>
+          <div class="legend">
+            <span class="legend-item"><i class="sw sw-visited"></i>食べた</span>
+            <span class="legend-item"><i class="sw sw-pin"></i>現地で食べた</span>
+            <span class="legend-item"><i class="sw sw-unvisited"></i>未食</span>
+            <span class="legend-hint">県をタップすると、その県で食べた料理が見られます</span>
+          </div>
+        </div>
+
+        <aside class="region-panel" aria-labelledby="region-title">
+          <h2 id="region-title">地方別の制覇状況</h2>
+          <div class="regions" id="regions"><!-- 地方ごとの進捗 --></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="search-section">
+      <h2>都道府県をさがす</h2>
+      <div class="search-controls">
+        <input id="pref-search" type="search" placeholder="県名で検索（例: 青森 / おおさか / Kochi / 13）" autocomplete="off" />
+        <div class="chips" id="filter-chips">
+          <button type="button" class="chip is-active" data-filter="all">すべて</button>
+          <button type="button" class="chip" data-filter="eaten">食べた</button>
+          <button type="button" class="chip" data-filter="local">現地</button>
+          <button type="button" class="chip" data-filter="todo">まだ</button>
+        </div>
+      </div>
+      <p class="search-summary" id="search-summary"></p>
+      <div class="search-results" id="search-results"></div>
+    </section>
+
+    <section class="feed-section">
+      <h2>最近食べたもの</h2>
+      <div class="feed" id="feed"><!-- posts injected here --></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span id="footer-updated"></span>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="配色を切り替え">🌓 表示切替</button>
+    </div>
+  </footer>
+
+  <!-- 都道府県モーダル -->
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" id="modal-close" aria-label="閉じる">×</button>
+      <h3 id="modal-title"></h3>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="assets/app.js?v=1"></script>
+  <script src="assets/post.js?v=1"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    }
+  </script>
+</body>
+</html>

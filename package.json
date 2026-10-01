@@ -1,0 +1,12 @@
+{
+  "name": "japan-food-map",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "47都道府県の郷土料理をぜんぶ食べる企画の記録サイト",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "serve": "npx --yes serve .",
+    "build:map": "node tools/build-map.mjs"
+  }
+}
