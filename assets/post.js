@@ -563,14 +563,22 @@
   }
 
   // ---- 初期化 --------------------------------------------------------
+  // URL に #admin があれば管理者モードを有効化してハッシュを消す
+  function adminFromHash() {
+    if (!/admin/i.test(location.hash)) return;
+    enableAdmin();
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* noop */ }
+  }
+  function ensureUI() {
+    if (isAdmin() && !document.getElementById("fab-post")) buildUI();
+  }
+
   function init() {
-    // URL に #admin があれば管理者モードを有効化してハッシュを消す
-    if (/admin/i.test(location.hash)) {
-      enableAdmin();
-      try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* noop */ }
-    }
+    adminFromHash();
     window.JFMPost = { isAdmin, editPost, deletePost };
-    if (isAdmin()) buildUI();
+    ensureUI();
+    // 開いているページの URL に #admin を付け足した場合（再読み込みされない）にも反応する
+    window.addEventListener("hashchange", () => { adminFromHash(); ensureUI(); });
   }
 
   document.addEventListener("DOMContentLoaded", init);
