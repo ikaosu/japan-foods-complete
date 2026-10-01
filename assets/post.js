@@ -266,7 +266,7 @@
             <div class="pf-resolved" id="pf-resolved"></div>
             <input id="pf-dish" placeholder="料理名（例: せんべい汁）" />
             <textarea id="pf-comment" rows="3" placeholder="コメント（任意）"></textarea>
-            <label class="pf-check"><input type="checkbox" id="pf-local" /> <span>📍 現地（その都道府県内）で食べた</span></label>
+            <label class="pf-check"><input type="checkbox" id="pf-local" /> <span><i class="pin-dot" aria-hidden="true"></i>現地（その都道府県内）で食べた</span></label>
             <div class="pf-status" id="pf-status" aria-live="polite"></div>
             <div class="pf-actions">
               <button type="button" id="pf-settings-toggle" class="pf-link">⚙ 設定</button>

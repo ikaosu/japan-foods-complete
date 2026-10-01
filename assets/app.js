@@ -14,7 +14,7 @@
 
   // 描画に使うデータをモジュールスコープに保持
   const state = { posts: [], byCode: new Map(), prefs: {}, regions: [], map: null };
-  const mapRefs = { el: null, paths: new Map(), pins: new Map(), tip: null };
+  const mapRefs = { el: null, svg: null, label: null, paths: new Map(), pins: new Map(), tip: null };
 
   // ---- ユーティリティ -------------------------------------------------
   // 投稿数に応じた塗りの段階 (色は styles.css の .lv1〜.lv4)
@@ -45,7 +45,9 @@
     return p ? p.ja : code;
   }
 
-  const LOCAL_BADGE = `<span class="local-badge" title="現地で食べた">📍現地</span>`;
+  // 「現地で食べた」は地図のマーカーと同じ藍色の点で統一する
+  const PIN_DOT = `<i class="pin-dot" aria-hidden="true"></i>`;
+  const LOCAL_BADGE = `<span class="local-badge" title="現地で食べた">${PIN_DOT}現地</span>`;
   const PEND_BADGE = `<span class="pend-badge" title="公開サイトへ反映中(1〜2分)">⏳反映中</span>`;
 
   function mediaHTML(post, cls) {
@@ -228,9 +230,10 @@
     const nLocal = [...state.byCode.values()].filter((list) => list.some(isLocal)).length;
     const pct = Math.round((nPrefs / TOTAL) * 1000) / 10;
     $("#stat-prefs").textContent = nPrefs;
-    $("#stat-percent").textContent = pct + "%";
+    $("#stat-percent").textContent = pct;
     $("#stat-local").textContent = nLocal;
     $("#stat-dishes").textContent = state.posts.length;
+    $("#meter").setAttribute("aria-valuenow", nPrefs);
     requestAnimationFrame(() => {
       $("#progress-bar").style.width = Math.min(100, pct) + "%";
     });
@@ -255,9 +258,11 @@
     // 沖縄インセット枠。島が小さくスマホで押しにくいので、枠内のどこでも沖縄県として反応させる
     const { x, y, w, h } = m.inset;
     svg.appendChild(svgEl("rect", { x, y, width: w, height: h, rx: 12, class: "inset-frame", "data-code": m.inset.code }));
-    const label = svgEl("text", { x: x + 14, y: y + 30, class: "inset-label" });
+    const label = svgEl("text", { x: x + 14, y: y + 14, class: "inset-label", "dominant-baseline": "hanging" });
     label.textContent = nameOf(m.inset.code);
     svg.appendChild(label);
+    mapRefs.svg = svg;
+    mapRefs.label = label;
 
     const gPrefs = svgEl("g", { class: "prefs" });
     const gPins = svgEl("g", { class: "pins" });
@@ -266,7 +271,7 @@
       const path = svgEl("path", { d: shape.d, class: "pref", "data-code": code });
       gPrefs.appendChild(path);
       mapRefs.paths.set(code, path);
-      const pin = svgEl("circle", { cx: shape.px, cy: shape.py, r: 8, class: "pin" });
+      const pin = svgEl("circle", { cx: shape.px, cy: shape.py, r: 10, class: "pin" });
       gPins.appendChild(pin);
       mapRefs.pins.set(code, pin);
     }
@@ -295,14 +300,28 @@
       if (code) showTip(code, e); else hideTip();
     });
     svg.addEventListener("pointerleave", hideTip);
+
+    // 地図の表示幅が変わっても、マーカーと沖縄ラベルは画面上で同じ大きさに保つ
+    sizeMarks();
+    if (window.ResizeObserver) new ResizeObserver(sizeMarks).observe(svg);
+  }
+
+  const PIN_RADIUS_PX = 4.5; // マーカー直径9px + 縁取り2px（小さい県を隠しすぎない）
+  const LABEL_SIZE_PX = 12;
+  function sizeMarks() {
+    const w = mapRefs.svg && mapRefs.svg.getBoundingClientRect().width;
+    if (!w) return;
+    const unitsPerPx = state.map.viewBox[2] / w;
+    for (const pin of mapRefs.pins.values()) pin.setAttribute("r", (PIN_RADIUS_PX * unitsPerPx).toFixed(1));
+    mapRefs.label.setAttribute("font-size", (LABEL_SIZE_PX * unitsPerPx).toFixed(1));
   }
 
   function showTip(code, e) {
     const tip = mapRefs.tip;
     const st = prefStatus(code);
     tip.innerHTML = st.count
-      ? `<strong>${esc(nameOf(code))}</strong><br>食べた・${st.count}品${st.local ? `（うち現地 ${st.local}）` : ""}`
-      : `${esc(nameOf(code))}<br><span class="tip-soft">未食</span>`;
+      ? `<strong>${esc(nameOf(code))}</strong><br>食べた・${st.count}品${st.local ? `（うち${PIN_DOT}現地 ${st.local}）` : ""}`
+      : `<strong>${esc(nameOf(code))}</strong><br><span class="tip-soft">未食</span>`;
     const r = mapRefs.el.getBoundingClientRect();
     tip.style.left = e.clientX - r.left + "px";
     tip.style.top = e.clientY - r.top + "px";
@@ -354,10 +373,19 @@
         const done = codes.filter((c) => state.byCode.has(c)).length;
         const pct = codes.length ? Math.round((done / codes.length) * 100) : 0;
         const complete = codes.length > 0 && done === codes.length;
-        return `<button type="button" class="region${complete ? " is-complete" : ""}" data-region="${esc(r.key)}">
-          <span class="region-name">${esc(r.name)}${complete ? `<span class="region-done">制覇!</span>` : ""}</span>
-          <span class="region-count"><b>${done}</b> / ${codes.length}</span>
-          <span class="region-bar"><i style="width:${pct}%"></i></span>
+        // 県ごとに1マス。色は地図と同じ段階、現地で食べた県は中に藍の点
+        const cells = codes
+          .map((c) => {
+            const st = prefStatus(c);
+            const cls = (st.count ? " lv" + levelFor(st.count) : "") + (st.local ? " is-local" : "");
+            return `<i class="rcell${cls}" title="${esc(state.prefs[c].ja)}${st.count ? `・${st.count}品` : "・未食"}"></i>`;
+          })
+          .join("");
+        return `<button type="button" class="region${complete ? " is-complete" : ""}" data-region="${esc(r.key)}"
+            aria-label="${esc(r.name)} ${done} / ${codes.length} 県（${pct}%）">
+          <span class="region-name">${esc(r.name)}${complete ? `<span class="region-done">制覇</span>` : ""}</span>
+          <span class="region-count"><b>${done}</b><small> / ${codes.length}</small></span>
+          <span class="region-cells" aria-hidden="true">${cells}</span>
         </button>`;
       })
       .join("");
@@ -383,7 +411,8 @@
     const feed = $("#feed");
     const posts = state.posts;
     if (!posts.length) {
-      feed.innerHTML = `<p class="feed-empty">まだ投稿がありません。</p>`;
+      feed.innerHTML = `<div class="feed-empty"><span class="feed-empty-icon" aria-hidden="true">🍽️</span>
+        <p><b>まだ投稿がありません</b><br>食べた料理がここに並びます。</p></div>`;
       return;
     }
     const sorted = [...posts].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
@@ -447,10 +476,12 @@
     const p = state.prefs[code];
     const st = prefStatus(code);
     const eaten = st.count > 0;
-    return `<button type="button" class="srow ${eaten ? "srow-eaten" : ""}" data-code="${code}">
-      <span class="srow-name">${esc(p.ja)}<span class="srow-sub">${esc(p.kana)} · ${esc(p.en)}</span></span>
-      ${st.local ? `<span class="srow-pin" title="現地で食べた">📍</span>` : ""}
-      <span class="srow-status ${eaten ? "st-eaten" : "st-todo"}">${eaten ? `食べた・${st.count}品` : "未食"}</span>
+    // 未食は控えめに、食べた県だけ地図と同じ色のマスと品数で目立たせる
+    return `<button type="button" class="srow${eaten ? " is-eaten" : ""}" data-code="${code}">
+      <i class="srow-sw${eaten ? " lv" + levelFor(st.count) : ""}" aria-hidden="true"></i>
+      <span class="srow-name">${esc(p.ja)}<span class="srow-sub">${esc(p.kana)}</span></span>
+      ${st.local ? `<span class="srow-pin" title="現地で食べた">${PIN_DOT}</span>` : ""}
+      <span class="srow-status">${eaten ? `${st.count}品` : "未食"}</span>
     </button>`;
   }
 

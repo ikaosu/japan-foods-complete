@@ -16,7 +16,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
 
-  <link rel="stylesheet" href="assets/styles.css?v=1" />
+  <link rel="stylesheet" href="assets/styles.css?v=3" />
 </head>
 <body>
   <header class="site-header">
@@ -24,46 +24,52 @@
       <h1>🗾 47都道府県 料理制覇マップ</h1>
       <p class="tagline">47都道府県の郷土料理を、ぜんぶ食べる。<br class="tagline-br" />食べた県から地図が色づいていく。</p>
 
-      <div class="stats" id="stats">
-        <div class="stat">
-          <span class="stat-num" id="stat-prefs">–</span>
-          <span class="stat-label">食べた県</span>
-        </div>
-        <div class="stat">
-          <span class="stat-num" id="stat-percent">–</span>
-          <span class="stat-label">制覇率</span>
-        </div>
-        <div class="stat">
-          <span class="stat-num" id="stat-local">–</span>
-          <span class="stat-label">現地で食べた県</span>
-        </div>
-        <div class="stat">
-          <span class="stat-num" id="stat-dishes">–</span>
-          <span class="stat-label">食べた料理</span>
+      <div class="hero">
+        <p class="hero-fig"><span class="hero-num" id="stat-prefs">–</span><span class="hero-den">/ 47</span></p>
+        <p class="hero-label">都道府県を制覇</p>
+        <div class="meter" id="meter" role="progressbar" aria-label="47都道府県制覇の進捗" aria-valuemin="0" aria-valuemax="47" aria-valuenow="0">
+          <div class="meter-fill" id="progress-bar"></div>
         </div>
       </div>
 
-      <div class="progress" title="47都道府県制覇の進捗">
-        <div class="progress-bar" id="progress-bar"></div>
-      </div>
+      <dl class="stats" id="stats">
+        <div class="stat">
+          <dt>制覇率</dt>
+          <dd><b id="stat-percent">–</b><small>%</small></dd>
+        </div>
+        <div class="stat">
+          <dt><i class="pin-dot" aria-hidden="true"></i>現地で食べた</dt>
+          <dd><b id="stat-local">–</b><small>県</small></dd>
+        </div>
+        <div class="stat">
+          <dt>食べた料理</dt>
+          <dd><b id="stat-dishes">–</b><small>品</small></dd>
+        </div>
+      </dl>
     </div>
   </header>
 
   <main class="wrap">
     <section class="map-section">
       <div class="map-layout">
-        <div class="map-col">
+        <div class="map-card">
           <div id="map" class="map" role="img" aria-label="日本地図。料理を食べた都道府県が色づいています。"></div>
           <div class="legend">
-            <span class="legend-item"><i class="sw sw-visited"></i>食べた</span>
-            <span class="legend-item"><i class="sw sw-pin"></i>現地で食べた</span>
-            <span class="legend-item"><i class="sw sw-unvisited"></i>未食</span>
-            <span class="legend-hint">県をタップすると、その県で食べた料理が見られます</span>
+            <div class="legend-scale">
+              <span class="legend-title">食べた品数</span>
+              <span class="scale" aria-hidden="true">
+                <span><i class="lv1"></i>1</span><span><i class="lv2"></i>2</span><span><i class="lv3"></i>3–4</span><span><i class="lv4"></i>5+</span>
+              </span>
+            </div>
+            <span class="legend-item"><i class="pin-dot" aria-hidden="true"></i>現地で食べた</span>
+            <span class="legend-item"><i class="sw-todo" aria-hidden="true"></i>未食</span>
           </div>
+          <p class="map-hint">県をタップすると、その県で食べた料理が見られます</p>
         </div>
 
         <aside class="region-panel" aria-labelledby="region-title">
           <h2 id="region-title">地方別の制覇状況</h2>
+          <p class="section-hint">地方をタップすると、その地方の一覧へ移動します</p>
           <div class="regions" id="regions"><!-- 地方ごとの進捗 --></div>
         </aside>
       </div>
@@ -106,8 +112,8 @@
     </div>
   </div>
 
-  <script src="assets/app.js?v=1"></script>
-  <script src="assets/post.js?v=2"></script>
+  <script src="assets/app.js?v=3"></script>
+  <script src="assets/post.js?v=3"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
